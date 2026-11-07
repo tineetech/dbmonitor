@@ -2,8 +2,35 @@
   'use strict';
   var dbm = window.DBM;
   var state = { page: 1, perPage: 10, search: '', status: '', database: '', from: '', to: '', sort: 'created_at', order: 'desc', totalPages: 1 };
+  var isSuperAdmin = false;
 
   function $(id) { return document.getElementById(id); }
+
+  async function loadCurrentUser() {
+    try {
+      var me = await dbm.api('/api/v1/auth/me');
+      isSuperAdmin = !!(me && me.role === 'super_admin');
+    } catch (err) {
+      isSuperAdmin = false;
+    }
+  }
+
+  async function deleteBackup(backupId, filename) {
+    var confirmed = await dbm.confirm({
+      title: 'Hapus backup?',
+      text: 'File "' + filename + '" akan dihapus permanen dari server beserta datanya. Tindakan ini tidak bisa dibatalkan.',
+      confirmText: 'Hapus',
+      danger: true,
+    });
+    if (!confirmed) return;
+    try {
+      await dbm.api('/api/v1/backups/' + backupId, { method: 'DELETE' });
+      dbm.toast('Backup dihapus.', 'success');
+      loadBackups();
+    } catch (err) {
+      dbm.toast('Gagal menghapus backup: ' + err.message, 'error');
+    }
+  }
 
   function queryString() {
     var params = new URLSearchParams({
@@ -56,6 +83,9 @@
         + (backup.file_exists
             ? '<a class="inline-flex rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600" href="/api/v1/backups/' + backup.id + '/download">Download</a>'
             : '<span class="inline-flex rounded-md bg-slate-200 dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-400">File hilang</span>')
+        + (isSuperAdmin
+            ? '<button type="button" data-delete-id="' + backup.id + '" data-filename="' + dbm.escapeHtml(backup.filename) + '" class="inline-flex rounded-md border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 ml-1">Hapus</button>'
+            : '')
         + '</td>'
         + '</tr>';
     }).join('');
@@ -105,7 +135,12 @@
         loadBackups();
       });
     });
+    $('backup-rows').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-delete-id]');
+      if (!button) return;
+      deleteBackup(button.getAttribute('data-delete-id'), button.getAttribute('data-filename'));
+    });
     loadDatabaseOptions();
-    loadBackups();
+    loadCurrentUser().then(loadBackups);
   });
 })();

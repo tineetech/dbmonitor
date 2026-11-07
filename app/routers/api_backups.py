@@ -14,6 +14,7 @@ from app.dependencies import (
     FULL_ACCESS_ROLES,
     client_ip,
     get_current_full_access,
+    get_current_super_admin,
     get_current_user,
     require_csrf,
 )
@@ -289,6 +290,28 @@ def backup_detail(backup_id: int, db: Session = Depends(get_db), user: dict = De
         "server_path": str(candidate) if (candidate and is_full_access) else None,
         "location": location,
     }
+
+
+@router.delete("/{backup_id}")
+def delete_backup(
+    backup_id: int,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_super_admin),
+    _csrf: dict = Depends(require_csrf),
+):
+    backup = db.get(Backup, backup_id)
+    if not backup:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Backup not found")
+    filename = backup.filename
+    deleted = backup_service.delete_backup_entry(
+        db,
+        backup_id,
+        actor=user["username"],
+        reason="Deleted by super_admin from Backup Manager",
+    )
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete backup file")
+    return {"detail": "Backup deleted", "id": backup_id, "filename": filename}
 
 
 @router.get("/{backup_id}/download")
