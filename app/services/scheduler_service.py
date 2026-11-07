@@ -35,12 +35,12 @@ def compute_next_run(frequency: str, run_time: str, day_of_week: Optional[int] =
 
 
 def due_schedules(db: Session) -> list[Schedule]:
-    now = now()
+    current_time = now()
     return (
         db.query(Schedule)
         .filter(Schedule.enabled.is_(True))
         .filter(Schedule.next_run_at.isnot(None))
-        .filter(Schedule.next_run_at <= now)
+        .filter(Schedule.next_run_at <= current_time)
         .order_by(Schedule.next_run_at.asc())
         .all()
     )
@@ -74,7 +74,7 @@ def process_due_schedules(db: Session) -> list[int]:
 
 def capture_size_snapshots(db: Session, min_interval_minutes: int = 60) -> int:
     overview = mysql_service.get_database_overview(show_system=False)
-    now = now()
+    current_time = now()
     inserted = 0
     for item in overview:
         latest = (
@@ -84,7 +84,7 @@ def capture_size_snapshots(db: Session, min_interval_minutes: int = 60) -> int:
             .first()
         )
         if latest is not None:
-            age = now - latest.captured_at
+            age = current_time - latest.captured_at
             if age < timedelta(minutes=min_interval_minutes):
                 continue
         db.add(
@@ -92,7 +92,7 @@ def capture_size_snapshots(db: Session, min_interval_minutes: int = 60) -> int:
                 database_name=item["name"],
                 total_bytes=int(item["total_size"]),
                 table_count=int(item["table_count"]),
-                captured_at=now,
+                captured_at=current_time,
             )
         )
         inserted += 1

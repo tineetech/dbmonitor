@@ -5,11 +5,11 @@ Aplikasi web administrasi terpusat untuk **monitoring database MySQL/MariaDB** d
 Fungsi inti:
 
 - Menemukan & menampilkan seluruh database non-sistem yang dapat diakses (ukuran, jumlah tabel, metadata tabel).
-- Memilih satu database lalu **Backup & Download** — dump `.sql` dibuat oleh worker persisten, diverifikasi (exit code, ukuran, SHA-256), disimpan di server, lalu diunduh otomatis.
+- Memilih satu database lalu **Backup & Download** â€” dump `.sql` dibuat oleh worker persisten, diverifikasi (exit code, ukuran, SHA-256), disimpan di server, lalu diunduh otomatis.
 - **Backup Manager** untuk mencari, memfilter, dan mengunduh ulang backup lama (streaming, anti path traversal).
 - Storage monitoring, database growth, scheduled backup, retention, audit log, dan authentication admin.
 
-Stack: Python 3.11+ · FastAPI · SQLAlchemy · PyMySQL · Jinja2 · Tailwind CSS (CDN) · Vanilla JS · Chart.js · SweetAlert2 (CDN) · Uvicorn · mysqldump/mariadb-dump. Dev: Windows + XAMPP. Production: Ubuntu + Nginx + systemd.
+Stack: Python 3.11+ Â· FastAPI Â· SQLAlchemy Â· PyMySQL Â· Jinja2 Â· Tailwind CSS (CDN) Â· Vanilla JS Â· Chart.js Â· Uvicorn Â· mysqldump/mariadb-dump. Dev: Windows + XAMPP. Production: Ubuntu + Nginx + systemd.
 
 ---
 
@@ -56,19 +56,18 @@ SHOW_SYSTEM_DATABASES=false
 STORAGE_WARN_PCT=70
 STORAGE_CRITICAL_PCT=85
 MONITORING_REFRESH_SECONDS=60
-APP_TIMEZONE_OFFSET_HOURS=7
 ```
 
 ### 2.2 Siapkan database aplikasi & akun MySQL dedicated
 
-Jalankan sebagai admin MySQL (contoh; ganti password):
+Jalankan sebagai admin MySQL untuk membuat user dan akses:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS db_monitor_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'db_monitor'@'localhost' IDENTIFIED BY 'GANTI_PASSWORD';
 CREATE USER IF NOT EXISTS 'db_monitor'@'127.0.0.1' IDENTIFIED BY 'GANTI_PASSWORD';
 
--- Metadata aplikasi (jobs, audit, schedule, dst.)
+-- Metadata aplikasi database yang dipakai (jobs, audit, schedule, dst.)
 GRANT ALL PRIVILEGES ON db_monitor_app.* TO 'db_monitor'@'localhost';
 GRANT ALL PRIVILEGES ON db_monitor_app.* TO 'db_monitor'@'127.0.0.1';
 
@@ -102,7 +101,7 @@ Butuh tiga proses (jalankan di terminal terpisah):
 .\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 # 2) Backup worker (menjalankan job dump)
-.\venv\Scripts\p  
+.\venv\Scripts\python.exe -m app.workers.backup_worker
 
 # 3) Scheduler worker (jadwal, snapshot growth, retention)
 .\venv\Scripts\python.exe -m app.workers.scheduler_worker
@@ -112,16 +111,16 @@ Buka <http://127.0.0.1:8000> lalu login.
 
 > Tanpa backup worker, job backup akan tetap `pending`. Tanpa scheduler worker, jadwal & snapshot tidak berjalan.
 
-## 4. Alur backup (sesuai PRD)
+## 4. Alur backup
 
-1. `POST /api/v1/backups` `{"database_name": "..."}` → `202` dengan `job_id` + `poll_url`.
+1. `POST /api/v1/backups` `{"database_name": "..."}` contoh `202` dengan `job_id` + `poll_url`.
 2. Frontend polling `GET /api/v1/backups/jobs/{id}`.
 3. Worker mengklaim job, menjalankan `mysqldump` dengan argument list (`shell=False`), `--single-transaction --quick --routines --triggers --events --hex-blob --default-character-set=utf8mb4 --result-file=<file>`.
-4. Kredensial diberikan melalui **defaults-file sementara** (permision ketat, dihapus setelah dipakai) — tidak pernah di argumen CLI.
+4. Kredensial diberikan melalui **defaults-file sementara** (permision ketat, dihapus setelah dipakai) â€” tidak pernah di argumen CLI.
 5. Verifikasi: exit code 0, file ada, ukuran > 0, SHA-256 dihitung.
 6. Saat `success`, response polling memuat `filename`, `file_size`, `checksum`, dan `download_url`; frontend langsung memicu download.
 7. File tetap tersimpan di server (`BACKUP_DIR`), bisa diunduh ulang dari Backup Manager.
-8. **Quick Backup di Dashboard** mengirim `{"database_name": "...", "ephemeral": true}`. File dibuat sementara hanya untuk diunduh, lalu **dihapus otomatis dari server segera setelah download selesai**; backup ephemeral tidak muncul di Backup Manager, tidak dihitung di statistik/storage, dan jika tidak pernah diunduh akan dibersihkan scheduler setelah `EPHEMERAL_TTL_MINUTES` (default 15 menit). Backup dari halaman Databases/Backup Manager tetap persisten sesuai PRD.
+8. **Quick Backup di Dashboard** mengirim `{"database_name": "...", "ephemeral": true}`. File dibuat sementara hanya untuk diunduh, lalu **dihapus otomatis dari server segera setelah download selesai**; backup ephemeral tidak muncul di Backup Manager, tidak dihitung di statistik/storage, dan jika tidak pernah diunduh akan dibersihkan scheduler setelah `EPHEMERAL_TTL_MINUTES` (default 15 menit). Backup dari halaman Databases/Backup Manager tetap persisten.
 
 Catatan konsistensi: `--single-transaction` menjamin snapshot untuk engine transaksional (InnoDB). Untuk MyISAM/engine non-transaksional, UI menampilkan peringatan bahwa konsistensi tidak dijamin.
 
@@ -153,7 +152,7 @@ Script membuat `db_monitor_restore_test`, mengimpor dump, menghitung tabel, lalu
 - Direktori backup tidak pernah diekspos sebagai static/route.
 - Security headers: CSP (`default-src 'self'`) dengan allowlist CDN (`cdn.tailwindcss.com`, `cdn.jsdelivr.net`), X-Frame-Options DENY, nosniff, no-store.
 - Aset UI (Tailwind CSS & Chart.js) dimuat dari CDN, jadi halaman memerlukan koneksi internet; tidak ada `node_modules`/build npm. Jika ingin full offline, ganti ke file statis lokal dan sesuaikan CSP.
-- Role `viewer`: dashboard, quick download (ephemeral), serta halaman All Backups + detail + download file backup persistent; halaman/API lain ditolak.
+- Role `viewer`: hanya dashboard + quick download (ephemeral); halaman/API lain ditolak.
 - Audit log mencatat aksi penting tanpa secret.
 
 ## 7. Production (Ubuntu VPS)
@@ -218,6 +217,5 @@ storage/logs/
 - Backup berjalan di proses worker terpisah; jika worker restart, job `processing` yang menggantung ditandai `failed` agar tidak menyesatkan.
 - Retention (default 30 hari, dapat diubah di Settings) hanya menghapus file yang tercatat milik aplikasi dan berada di `BACKUP_DIR`.
 - `TABLE_ROWS` InnoDB adalah estimasi; aplikasi tidak menjalankan `COUNT(*)` otomatis.
-- Semua timestamp disimpan dalam waktu lokal aplikasi (WIB / UTC+7, atur lewat APP_TIMEZONE_OFFSET_HOURS); tampilan selalu diformat ke Asia/Jakarta (WIB). Untuk menggeser data lama dari UTC ke WIB, jalankan sekali python -m scripts.migrate_timestamps_wib --apply.
-
+- Semua timestamp disimpan UTC; tampilan memakai locale browser.
 
