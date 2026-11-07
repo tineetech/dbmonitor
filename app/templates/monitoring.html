@@ -24,6 +24,21 @@
         <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Terpakai</dt><dd id="st-used" class="font-medium">-</dd></div>
         <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Tersedia</dt><dd id="st-free" class="font-medium">-</dd></div>
       </dl>
+      <div>
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>RAM terpakai</span><span id="ram-percent" class="font-medium">0%</span>
+        </div>
+        <div class="h-4 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+          <div id="ram-bar" class="h-full bg-accent transition-all" style="width:0%"></div>
+        </div>
+      </div>
+      <dl class="text-sm space-y-2">
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">RAM Total</dt><dd id="ram-total" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">RAM Terpakai</dt><dd id="ram-used" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">CPU</dt><dd id="cpu-percent" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Core</dt><dd id="cpu-count" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Load avg (1/5/15 mnt)</dt><dd id="cpu-load" class="font-medium">-</dd></div>
+      </dl>
       <div class="border-t border-slate-200 dark:border-slate-800 pt-4 text-sm space-y-2">
         <h3 class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Backup Storage</h3>
         <div class="flex justify-between gap-4"><span class="text-slate-500 dark:text-slate-400">Ukuran</span><span id="bs-size" class="font-medium">-</span></div>
@@ -48,6 +63,15 @@
     </div>
     <canvas id="chart-growth" height="260"></canvas>
     <p id="growth-empty" class="hidden text-center text-slate-400 text-sm py-10">Belum ada data snapshot. Scheduler worker akan merekam setiap jam, atau klik “Capture sekarang”.</p>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 xl:col-span-2 xl:col-start-2">
+    <div>
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Host Resources</h2>
+      <p class="text-[11px] text-slate-400">Snapshot RAM &amp; CPU host/VPS per jam (tersimpan otomatis oleh scheduler worker)</p>
+    </div>
+    <canvas id="chart-host" height="220" class="mt-4"></canvas>
+    <p id="host-empty" class="hidden text-center text-slate-400 text-sm py-10">Belum ada data snapshot host. Scheduler worker akan merekam setiap jam, atau klik “Capture sekarang”.</p>
   </div>
 </div>
 {% endblock %}

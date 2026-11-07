@@ -6,7 +6,7 @@ import traceback
 from datetime import timedelta
 
 from app.database import SessionLocal, init_db
-from app.services import backup_service, scheduler_service
+from app.services import backup_service, scheduler_service, system_service
 from app.utils import now
 
 STOP_REQUESTED = False
@@ -38,19 +38,25 @@ def main() -> int:
         try:
             created = scheduler_service.process_due_schedules(db)
             snapshots = scheduler_service.capture_size_snapshots(db, min_interval_minutes=60)
+            host_captured = system_service.capture_host_snapshot(db, min_interval_minutes=60)
             ephemeral_removed = backup_service.cleanup_expired_ephemeral(db)
             if created:
                 print(f"[scheduler] Enqueued {len(created)} scheduled backup job(s)")
             if snapshots:
                 print(f"[scheduler] Captured {snapshots} size snapshot(s)")
+            if host_captured:
+                print("[scheduler] Captured host resource snapshot")
             if ephemeral_removed:
                 print(f"[scheduler] Removed {ephemeral_removed} expired ephemeral quick backup(s)")
 
             if now() - LAST_RETENTION_RUN >= RETENTION_INTERVAL:
                 result = scheduler_service.run_retention(db)
+                pruned = system_service.prune_host_snapshots(db)
                 LAST_RETENTION_RUN = now()
                 if result["deleted"]:
                     print(f"[scheduler] Retention removed {result['deleted']} old backup(s), freed {result['freed_bytes']} bytes")
+                if pruned:
+                    print(f"[scheduler] Pruned {pruned} old host snapshot(s)")
         except Exception:
             traceback.print_exc()
         finally:

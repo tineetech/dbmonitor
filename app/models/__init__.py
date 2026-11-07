@@ -5,5 +5,6 @@ from app.models.models import (  # noqa: F401
     Backup,
     BackupJob,
     DatabaseSizeSnapshot,
+    HostResourceSnapshot,
     Schedule,
 )

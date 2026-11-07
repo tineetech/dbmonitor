@@ -1,6 +1,6 @@
 ﻿from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -76,6 +76,21 @@ class DatabaseSizeSnapshot(Base):
     total_bytes = Column(BigInteger, nullable=False, default=0)
     table_count = Column(Integer, nullable=False, default=0)
     captured_at = Column(DateTime, nullable=False, default=now, index=True)
+
+
+class HostResourceSnapshot(Base):
+    __tablename__ = "host_resource_snapshots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    captured_at = Column(DateTime, nullable=False, default=now, index=True)
+    ram_total_bytes = Column(BigInteger, nullable=False, default=0)
+    ram_used_bytes = Column(BigInteger, nullable=False, default=0)
+    ram_percent = Column(Float, nullable=False, default=0.0)
+    cpu_percent = Column(Float, nullable=False, default=0.0)
+    cpu_count = Column(Integer, nullable=False, default=0)
+    load_avg_1m = Column(Float, nullable=True)
+    load_avg_5m = Column(Float, nullable=True)
+    load_avg_15m = Column(Float, nullable=True)
 
 
 class Schedule(Base):

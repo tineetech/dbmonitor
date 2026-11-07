@@ -2,6 +2,7 @@
   'use strict';
   var dbm = window.DBM;
   var growthChart = null;
+  var hostChart = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -31,6 +32,20 @@
       $('bs-count').textContent = dbm.formatNumber(bs.file_count || 0);
       $('bs-missing').textContent = dbm.formatNumber(bs.missing_files || 0);
       $('bs-dir').textContent = bs.backup_dir || '';
+      var host = data.host || {};
+      var ram = host.ram || {};
+      var cpu = host.cpu || {};
+      var ramPercent = Number(ram.percent || 0);
+      $('ram-percent').textContent = ramPercent.toFixed(1) + '%';
+      $('ram-total').textContent = dbm.formatBytes(ram.total);
+      $('ram-used').textContent = dbm.formatBytes(ram.used);
+      var ramBar = $('ram-bar');
+      ramBar.style.width = Math.min(ramPercent, 100) + '%';
+      ramBar.className = 'h-full transition-all ' + (ramPercent >= 85 ? 'bg-red-500' : ramPercent >= 70 ? 'bg-amber-500' : 'bg-accent');
+      $('cpu-percent').textContent = Number(cpu.percent || 0).toFixed(1) + '%';
+      $('cpu-count').textContent = cpu.count != null ? String(cpu.count) : '-';
+      var loads = [cpu.load_avg_1m, cpu.load_avg_5m, cpu.load_avg_15m];
+      $('cpu-load').textContent = loads.every(function (v) { return v == null; }) ? '-' : loads.map(function (v) { return v == null ? '-' : Number(v).toFixed(2); }).join(' / ');
       $('st-warn').textContent = data.warn_pct;
       $('st-critical').textContent = data.critical_pct;
     } catch (err) {
@@ -97,18 +112,72 @@
     }
   }
 
+  async function loadHostHistory() {
+    try {
+      var data = await dbm.api('/api/v1/monitoring/host-history?limit=168');
+      var points = data.points || [];
+      var empty = $('host-empty');
+      var ctx = $('chart-host');
+      if (!points.length) {
+        ctx.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+      ctx.classList.remove('hidden');
+      empty.classList.add('hidden');
+      var labels = points.map(function (point) {
+        return point.captured_at ? point.captured_at.slice(0, 16).replace('T', ' ') : '';
+      });
+      if (hostChart) hostChart.destroy();
+      hostChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.map(function (label) { return label.slice(5); }),
+          datasets: [
+            {
+              label: 'RAM (%)',
+              data: points.map(function (point) { return Number(point.ram_percent || 0); }),
+              borderColor: '#2563eb',
+              backgroundColor: '#2563eb',
+              tension: 0.3,
+              spanGaps: true,
+            },
+            {
+              label: 'CPU (%)',
+              data: points.map(function (point) { return Number(point.cpu_percent || 0); }),
+              borderColor: '#f59e0b',
+              backgroundColor: '#f59e0b',
+              tension: 0.3,
+              spanGaps: true,
+            },
+          ],
+        },
+        options: {
+          scales: { y: { min: 0, max: 100, title: { display: true, text: '%' } } },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+        },
+      });
+    } catch (err) {
+      var box = $('monitoring-error');
+      box.textContent = 'Gagal memuat host resources: ' + err.message;
+      box.classList.remove('hidden');
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
-    $('refresh-monitoring').addEventListener('click', function () { loadStorage(); loadGrowth(); });
+    $('refresh-monitoring').addEventListener('click', function () { loadStorage(); loadGrowth(); loadHostHistory(); });
     $('capture-snapshot').addEventListener('click', async function () {
       try {
         var result = await dbm.api('/api/v1/monitoring/snapshot', { method: 'POST' });
         dbm.toast('Snapshot tersimpan (' + result.inserted + ' database).', 'success');
         loadGrowth();
+        loadHostHistory();
       } catch (err) {
         dbm.toast('Gagal capture snapshot: ' + err.message, 'error');
       }
     });
     loadStorage();
     loadGrowth();
+    loadHostHistory();
   });
 })();

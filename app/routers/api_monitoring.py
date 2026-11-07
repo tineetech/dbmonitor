@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_full_access, get_current_user, require_csrf
-from app.models import DatabaseSizeSnapshot
-from app.services import mysql_service, scheduler_service, storage_service
+from app.models import DatabaseSizeSnapshot, HostResourceSnapshot
+from app.services import mysql_service, scheduler_service, storage_service, system_service
 
 router = APIRouter(prefix="/api/v1/monitoring", tags=["monitoring"])
 
@@ -23,7 +23,36 @@ def health(db: Session = Depends(get_db), user: dict = Depends(get_current_user)
 @router.get("/storage")
 def storage(db: Session = Depends(get_db), user: dict = Depends(get_current_full_access)):
     del user
-    return storage_service.storage_status(db)
+    result = storage_service.storage_status(db)
+    result["host"] = system_service.host_resources()
+    return result
+
+
+@router.get("/host-history")
+def host_history(
+    limit: int = Query(default=168, ge=1, le=720),
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_full_access),
+):
+    del user
+    rows = (
+        db.query(HostResourceSnapshot)
+        .order_by(HostResourceSnapshot.captured_at.desc())
+        .limit(limit)
+        .all()
+    )
+    rows.reverse()
+    return {
+        "points": [
+            {
+                "captured_at": row.captured_at.isoformat() if row.captured_at else None,
+                "ram_percent": float(row.ram_percent),
+                "cpu_percent": float(row.cpu_percent),
+                "load_avg_1m": row.load_avg_1m,
+            }
+            for row in rows
+        ]
+    }
 
 
 @router.get("/growth")
@@ -69,5 +98,6 @@ def capture_snapshot(
 ):
     del _csrf
     inserted = scheduler_service.capture_size_snapshots(db, min_interval_minutes=0)
-    return {"inserted": inserted, "actor": user["username"]}
+    host_captured = system_service.capture_host_snapshot(db, min_interval_minutes=0)
+    return {"inserted": inserted, "host_captured": host_captured, "actor": user["username"]}
 
