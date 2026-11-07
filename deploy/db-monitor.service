@@ -1,0 +1,20 @@
+[Unit]
+Description=DB Monitor & Backup Manager (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+User=dbmonitor
+Group=dbmonitor
+WorkingDirectory=/opt/db-monitor
+EnvironmentFile=/opt/db-monitor/.env
+ExecStart=/opt/db-monitor/venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

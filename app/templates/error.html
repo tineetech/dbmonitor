@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ status_code }} · DB Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/js/tailwind-config.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+  <div class="text-center">
+    <p class="text-6xl font-bold text-slate-300">{{ status_code }}</p>
+    <p class="mt-4 text-slate-600">{{ message }}</p>
+    <a href="/dashboard" class="mt-6 inline-flex rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-navy-800">Kembali ke Dashboard</a>
+  </div>
+</body>
+</html>

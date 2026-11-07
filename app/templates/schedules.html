@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Scheduled Backup{% endblock %}
+{% block page_title %}Scheduled Backup{% endblock %}
+{% block page_subtitle %}Backup otomatis berdasarkan database, waktu, dan frekuensi{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+    <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Buat Jadwal Baru</h2>
+    <p class="text-[11px] text-slate-400 mt-0.5">Scheduler worker akan menjalankan backup otomatis sesuai jadwal (timezone server).</p>
+    <form id="schedule-form" class="mt-4 space-y-4 text-sm">
+      <div>
+        <label for="schedule-db" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Database</label>
+        <select id="schedule-db" required class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5"></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="schedule-frequency" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Frekuensi</label>
+          <select id="schedule-frequency" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
+            <option value="daily">Harian</option>
+            <option value="weekly">Mingguan</option>
+          </select>
+        </div>
+        <div>
+          <label for="schedule-time" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Jam (HH:MM)</label>
+          <input id="schedule-time" type="time" value="02:00" required class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5" />
+        </div>
+      </div>
+      <div id="weekday-row" class="hidden">
+        <label for="schedule-weekday" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Hari (mingguan)</label>
+        <select id="schedule-weekday" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
+          <option value="0">Senin</option><option value="1">Selasa</option><option value="2">Rabu</option><option value="3">Kamis</option><option value="4">Jumat</option><option value="5">Sabtu</option><option value="6">Minggu</option>
+        </select>
+      </div>
+      <label class="flex items-center gap-2 text-sm"><input id="schedule-enabled" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent" /> Aktif</label>
+      <button type="submit" class="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-600">Simpan Jadwal</button>
+    </form>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 xl:col-span-2">
+    <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Jadwal Terdaftar</h2>
+      <button id="refresh-schedules" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs hover:border-accent hover:text-accent">Refresh</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs uppercase text-slate-400 border-b border-slate-200 dark:border-slate-800">
+            <th class="py-3 pl-4 pr-4">Database</th>
+            <th class="py-3 pr-4">Frekuensi</th>
+            <th class="py-3 pr-4">Jadwal</th>
+            <th class="py-3 pr-4">Terakhir jalan</th>
+            <th class="py-3 pr-4">Berikutnya</th>
+            <th class="py-3 pr-4">Status</th>
+            <th class="py-3 pr-4 text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-rows"></tbody>
+      </table>
+      <div id="schedules-loading" class="p-8"><div class="h-32 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse"></div></div>
+      <p id="schedules-empty" class="hidden text-center text-slate-400 py-10 text-sm">Belum ada jadwal.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/schedules.js"></script>{% endblock %}

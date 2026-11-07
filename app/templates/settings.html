@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Application Settings{% endblock %}
+{% block page_subtitle %}Konfigurasi aplikasi (editable) dan koneksi database (read-only, dari .env){% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+  <form id="settings-form" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-5">
+    <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Backup &amp; Storage</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="storage-warn" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Warning threshold (%)</label>
+        <input id="storage-warn" type="number" min="1" max="100" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5" />
+      </div>
+      <div>
+        <label for="storage-critical" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Critical threshold (%)</label>
+        <input id="storage-critical" type="number" min="1" max="100" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5" />
+      </div>
+      <div>
+        <label for="retention-days" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Retention (hari)</label>
+        <input id="retention-days" type="number" min="0" max="3650" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5" />
+      </div>
+      <div>
+        <label for="max-concurrent" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Max concurrent backup</label>
+        <input id="max-concurrent" type="number" min="1" max="10" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5" />
+      </div>
+    </div>
+    <p class="text-[11px] text-slate-400">Retention 0 = tidak menghapus otomatis. Threshold &amp; concurrency berlaku segera untuk backup berikutnya.</p>
+    <button type="submit" class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-600">Simpan Perubahan</button>
+  </form>
+
+  <div class="space-y-4">
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Database Connection <span class="ml-1 text-[10px] uppercase text-slate-400">read-only</span></h2>
+      <dl class="mt-3 text-sm space-y-2">
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Host</dt><dd id="conn-host" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Port</dt><dd id="conn-port" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Application schema</dt><dd id="conn-db" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Username</dt><dd id="conn-user" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Password</dt><dd class="font-medium text-slate-400">•••••••• (dari .env)</dd></div>
+      </dl>
+      <p class="mt-3 text-[11px] text-slate-400">Ubah lewat file .env lalu restart aplikasi. Password tidak pernah ditampilkan.</p>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Backup Configuration <span class="ml-1 text-[10px] uppercase text-slate-400">read-only</span></h2>
+      <dl class="mt-3 text-sm space-y-2">
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Backup directory</dt><dd id="bk-dir" class="font-medium text-xs break-all text-right">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Dump binary</dt><dd id="bk-dump" class="font-medium text-xs break-all text-right">-</dd></div>
+      </dl>
+      <p class="mt-3 text-[11px] text-slate-400">Dump memakai <code>--single-transaction --quick --routines --triggers --events --hex-blob</code> dengan kredensial via defaults-file sementara (bukan argumen CLI).</p>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Keamanan</h2>
+      <ul class="mt-3 text-xs text-slate-500 dark:text-slate-400 space-y-1.5">
+        <li>· Password admin di-hash Argon2</li>
+        <li>· Session cookie HttpOnly + SameSite=Lax (+ Secure di production)</li>
+        <li>· CSRF token pada setiap request yang mengubah data</li>
+        <li>· Rate limit login: 5 percobaan / 5 menit</li>
+        <li>· Backup dijalankan worker terpisah, streaming ke disk, bukan RAM</li>
+        <li>· Download streaming dengan validasi path (anti path traversal)</li>
+        <li>· Seluruh aksi penting tercatat di Audit Logs</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/settings.js"></script>{% endblock %}

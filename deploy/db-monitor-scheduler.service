@@ -1,0 +1,20 @@
+[Unit]
+Description=DB Monitor scheduler worker (schedules, snapshots, retention)
+After=network.target
+
+[Service]
+Type=simple
+User=dbmonitor
+Group=dbmonitor
+WorkingDirectory=/opt/db-monitor
+EnvironmentFile=/opt/db-monitor/.env
+ExecStart=/opt/db-monitor/venv/bin/python -m app.workers.scheduler_worker
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

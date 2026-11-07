@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ database_name }}{% endblock %}
+{% block page_title %}Database: {{ database_name }}{% endblock %}
+{% block page_subtitle %}Detail ukuran, engine, dan metadata tabel{% endblock %}
+{% block content %}
+<div id="detail-loading" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {% for _ in range(4) %}<div class="h-24 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>{% endfor %}
+</div>
+<div id="detail-error" class="hidden mb-6 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-5 py-4 text-sm text-red-700 dark:text-red-300"></div>
+
+<div id="detail-content" class="hidden space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Database</p>
+      <h2 id="db-title" class="text-lg font-semibold text-navy-800 dark:text-slate-100 break-all">{{ database_name }}</h2>
+      <p id="db-charset" class="text-xs text-slate-400 mt-0.5"></p>
+    </div>
+    <button id="backup-btn" type="button" class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-accent/50">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      Backup &amp; Download
+    </button>
+  </div>
+
+  <div id="engine-warning" class="hidden rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-5 py-4 text-xs text-amber-800 dark:text-amber-200"></div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"><p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Tabel</p><p id="stat-tables" class="mt-1 text-2xl font-bold">0</p></div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"><p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Data</p><p id="stat-data" class="mt-1 text-2xl font-bold">0 B</p></div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"><p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Index</p><p id="stat-index" class="mt-1 text-2xl font-bold">0 B</p></div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"><p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Size</p><p id="stat-total" class="mt-1 text-2xl font-bold">0 B</p></div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-slate-200 dark:border-slate-800">
+      <div>
+        <h3 class="text-sm font-semibold">Metadata Tabel</h3>
+        <p class="text-[11px] text-slate-400">TABLE_ROWS adalah estimasi InnoDB — bukan COUNT(*). Pagination aktif.</p>
+      </div>
+      <div class="relative w-full sm:w-64">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="table-search" type="text" placeholder="Cari tabel…" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-9 pr-4 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" />
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs uppercase text-slate-400 border-b border-slate-200 dark:border-slate-800">
+            <th class="py-3 pl-4 pr-4">Table Name</th>
+            <th class="py-3 pr-4">Engine</th>
+            <th class="py-3 pr-4 text-right">Rows (est.)</th>
+            <th class="py-3 pr-4 text-right">Data Length</th>
+            <th class="py-3 pr-4 text-right">Index Length</th>
+            <th class="py-3 pr-4 text-right">Total Size</th>
+            <th class="py-3 pr-4">Collation</th>
+          </tr>
+        </thead>
+        <tbody id="table-rows"></tbody>
+      </table>
+      <div id="tables-loading" class="p-6"><div class="h-32 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse"></div></div>
+      <p id="tables-empty" class="hidden text-center text-slate-400 py-8 text-sm">Tidak ada tabel.</p>
+    </div>
+    <div class="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-sm">
+      <button id="tables-prev" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs disabled:opacity-40">← Sebelumnya</button>
+      <span id="tables-page-info" class="text-xs text-slate-500 dark:text-slate-400">Halaman 1 / 1</span>
+      <button id="tables-next" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs disabled:opacity-40">Berikutnya →</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/database_detail.js"></script>{% endblock %}

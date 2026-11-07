@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Monitoring{% endblock %}
+{% block page_title %}Storage &amp; Growth Monitoring{% endblock %}
+{% block page_subtitle %}Kapasitas disk, backup storage, dan tren pertumbuhan database{% endblock %}
+{% block content %}
+<div id="monitoring-error" class="hidden mb-6 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-5 py-4 text-sm text-red-700 dark:text-red-300"></div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 xl:col-span-1">
+    <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Storage Monitoring</h2>
+    <div id="storage-loading" class="mt-4 h-40 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
+    <div id="storage-content" class="hidden mt-4 space-y-5">
+      <div>
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>Disk terpakai</span><span id="st-percent" class="font-medium">0%</span>
+        </div>
+        <div class="h-4 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+          <div id="st-bar" class="h-full bg-accent transition-all" style="width:0%"></div>
+        </div>
+        <p id="st-level" class="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-100 text-emerald-800">OK</p>
+      </div>
+      <dl class="text-sm space-y-2">
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Total</dt><dd id="st-total" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Terpakai</dt><dd id="st-used" class="font-medium">-</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500 dark:text-slate-400">Tersedia</dt><dd id="st-free" class="font-medium">-</dd></div>
+      </dl>
+      <div class="border-t border-slate-200 dark:border-slate-800 pt-4 text-sm space-y-2">
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Backup Storage</h3>
+        <div class="flex justify-between gap-4"><span class="text-slate-500 dark:text-slate-400">Ukuran</span><span id="bs-size" class="font-medium">-</span></div>
+        <div class="flex justify-between gap-4"><span class="text-slate-500 dark:text-slate-400">Jumlah file</span><span id="bs-count" class="font-medium">-</span></div>
+        <div class="flex justify-between gap-4"><span class="text-slate-500 dark:text-slate-400">File hilang</span><span id="bs-missing" class="font-medium">-</span></div>
+        <p id="bs-dir" class="text-[11px] text-slate-400 break-all">-</p>
+      </div>
+      <p class="text-[11px] text-slate-400">Threshold: warning ≥ <span id="st-warn">70</span>% · critical ≥ <span id="st-critical">85</span>%</p>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 xl:col-span-2">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Database Growth</h2>
+        <p class="text-[11px] text-slate-400">Snapshot ukuran per jam (tersimpan otomatis oleh scheduler worker)</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="capture-snapshot" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs hover:border-accent hover:text-accent">Capture sekarang</button>
+        <button id="refresh-monitoring" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs hover:border-accent hover:text-accent">Refresh</button>
+      </div>
+    </div>
+    <canvas id="chart-growth" height="260"></canvas>
+    <p id="growth-empty" class="hidden text-center text-slate-400 text-sm py-10">Belum ada data snapshot. Scheduler worker akan merekam setiap jam, atau klik “Capture sekarang”.</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/monitoring.js"></script>{% endblock %}

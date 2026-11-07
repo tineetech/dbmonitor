@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+{% block page_subtitle %}Ringkasan Monitoring Database dan Server{% endblock %}
+{% block content %}
+<div id="dashboard-loading" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {% for _ in range(4) %}<div class="h-28 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>{% endfor %}
+</div>
+
+<div id="dashboard-error" class="hidden mb-6 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-5 py-4 text-sm text-red-700 dark:text-red-300"></div>
+
+<div id="dashboard-content" class="hidden">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Database</p>
+      <p id="stat-databases" class="mt-1 text-2xl font-bold text-navy-800 dark:text-slate-100">0</p>
+      <p class="text-[11px] text-slate-400">non-sistem, accessible</p>
+    </div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Tabel</p>
+      <p id="stat-tables" class="mt-1 text-2xl font-bold text-navy-800 dark:text-slate-100">0</p>
+      <p id="stat-dbsize" class="text-[11px] text-slate-400">0 B</p>
+    </div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Backup File</p>
+      <p id="stat-backups" class="mt-1 text-2xl font-bold text-navy-800 dark:text-slate-100">0</p>
+      <p id="stat-backupsize" class="text-[11px] text-slate-400">0 B</p>
+    </div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Disk Terpakai</p>
+      <p id="stat-disk" class="mt-1 text-2xl font-bold text-navy-800 dark:text-slate-100">0%</p>
+      <p id="stat-diskdetail" class="text-[11px] text-slate-400">-</p>
+    </div>
+  </div>
+
+  
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+      <div class="flex-1 min-w-0">
+        <label for="quick-db" class="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Quick Backup &amp; Download</label>
+        <select id="quick-db" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm">
+          <option value="">Memuat database…</option>
+        </select>
+      </div>
+      <button id="quick-backup-btn" type="button" disabled class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Backup &amp; Download
+      </button>
+    </div>
+    <p id="quick-status" class="mt-2 text-xs text-slate-400">Pilih database lalu unduh file .sql-nya langsung. File tidak disimpan permanen di server — dihapus segera setelah diunduh.</p>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 xl:col-span-1">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Distribusi Ukuran Database</h2>
+      </div>
+      <canvas id="chart-databases" height="220"></canvas>
+      <p id="chart-empty" class="hidden text-sm text-slate-400 text-center py-10">Belum ada data database.</p>
+    </div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 xl:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Aktivitas Backup (14 hari)</h2>
+      </div>
+      <canvas id="chart-activity" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 xl:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Job Backup Terbaru</h2>
+        <a href="/backups" class="text-xs font-medium text-accent hover:underline">Backup Manager →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs uppercase text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <th class="py-2 pr-4">Database</th>
+              <th class="py-2 pr-4">Status</th>
+              <th class="py-2 pr-4">Oleh</th>
+              <th class="py-2">Waktu</th>
+            </tr>
+          </thead>
+          <tbody id="recent-jobs"></tbody>
+        </table>
+      </div>
+      <p id="recent-jobs-empty" class="hidden text-sm text-slate-400 text-center py-6">Belum ada job backup.</p>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Kapasitas Storage</h2>
+      <div>
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>Disk</span><span id="storage-percent">0%</span>
+        </div>
+        <div class="h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+          <div id="storage-bar" class="h-full bg-accent transition-all" style="width:0%"></div>
+        </div>
+        <p id="storage-detail" class="mt-1 text-[11px] text-slate-400">-</p>
+      </div>
+      <div class="border-t border-slate-200 dark:border-slate-800 pt-3 text-sm space-y-1">
+        <div class="flex justify-between"><span class="text-slate-500 dark:text-slate-400">Backup storage</span><span id="backup-storage-size" class="font-medium">0 B</span></div>
+        <div class="flex justify-between"><span class="text-slate-500 dark:text-slate-400">Jumlah file</span><span id="backup-storage-count" class="font-medium">0</span></div>
+        <div class="flex justify-between"><span class="text-slate-500 dark:text-slate-400">Backup terakhir</span><span id="last-backup-name" class="font-medium truncate max-w-[160px] text-right">-</span></div>
+      </div>
+      <div class="border-t border-slate-200 dark:border-slate-800 pt-3">
+        <h3 class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Aktivitas Audit Terbaru</h3>
+        <ul id="recent-audit" class="text-xs space-y-1.5"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/dashboard.js"></script>{% endblock %}

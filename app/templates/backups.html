@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Backups{% endblock %}
+{% block page_title %}Backup Manager{% endblock %}
+{% block page_subtitle %}File backup terverifikasi (SHA-256) — tersimpan di server, bisa diunduh ulang{% endblock %}
+{% block content %}
+<div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+  <div class="flex flex-col lg:flex-row lg:items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800">
+    <div class="relative flex-1">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="backup-search" type="text" placeholder="Cari nama file / database…" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-9 pr-4 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" />
+    </div>
+    <select id="backup-status" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm">
+      <option value="">Semua status</option>
+      <option value="success">Success</option>
+      <option value="failed">Failed</option>
+    </select>
+    <select id="backup-database" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm" aria-label="Filter database">
+      <option value="">Semua database</option>
+    </select>
+    <input id="backup-from" type="date" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm" aria-label="Dari tanggal" />
+    <input id="backup-to" type="date" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm" aria-label="Sampai tanggal" />
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs uppercase text-slate-400 border-b border-slate-200 dark:border-slate-800">
+          <th class="py-3 pl-4 pr-4 cursor-pointer select-none" data-sort="filename">Filename</th>
+          <th class="py-3 pr-4 cursor-pointer select-none" data-sort="database_name">Database</th>
+          <th class="py-3 pr-4 text-right cursor-pointer select-none" data-sort="file_size">Ukuran</th>
+          <th class="py-3 pr-4 cursor-pointer select-none" data-sort="created_at">Dibuat</th>
+          <th class="py-3 pr-4">Status</th>
+          <th class="py-3 pr-4">Checksum</th>
+          <th class="py-3 pr-4 text-right">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="backup-rows"></tbody>
+    </table>
+    <div id="backups-loading" class="p-8"><div class="h-40 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse"></div></div>
+    <p id="backups-empty" class="hidden text-center text-slate-400 py-10 text-sm">Belum ada file backup. Buat backup dari halaman detail database.</p>
+  </div>
+  <div class="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-sm">
+    <button id="prev-page" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs disabled:opacity-40">← Sebelumnya</button>
+    <span id="page-info" class="text-xs text-slate-500 dark:text-slate-400">Halaman 1 / 1</span>
+    <button id="next-page" type="button" class="rounded-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs disabled:opacity-40">Berikutnya →</button>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/backups.js"></script>{% endblock %}

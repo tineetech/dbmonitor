@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Backup Detail{% endblock %}
+{% block page_title %}Backup Detail{% endblock %}
+{% block page_subtitle %}Metadata file backup dan checksum SHA-256{% endblock %}
+{% block content %}
+<div id="backup-loading" class="max-w-3xl space-y-4"><div class="h-64 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div></div>
+<div id="backup-error" class="hidden rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-5 py-4 text-sm text-red-700 dark:text-red-300"></div>
+
+<div id="backup-content" class="hidden max-w-3xl">
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Filename</p>
+        <h2 id="detail-filename" class="mt-1 font-mono text-sm font-semibold break-all">-</h2>
+      </div>
+      <span id="detail-status"></span>
+    </div>
+
+    <dl class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3"><dt class="text-[11px] uppercase text-slate-400">Database</dt><dd id="detail-database" class="mt-0.5 font-medium">-</dd></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3"><dt class="text-[11px] uppercase text-slate-400">Ukuran File</dt><dd id="detail-size" class="mt-0.5 font-medium">-</dd></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3"><dt class="text-[11px] uppercase text-slate-400">Dibuat</dt><dd id="detail-created" class="mt-0.5 font-medium">-</dd></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3"><dt class="text-[11px] uppercase text-slate-400">Diminta oleh</dt><dd id="detail-requested" class="mt-0.5 font-medium">-</dd></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 sm:col-span-2"><dt class="text-[11px] uppercase text-slate-400">SHA-256 Checksum</dt><dd id="detail-sha" class="mt-0.5 font-mono text-xs break-all">-</dd></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3"><dt class="text-[11px] uppercase text-slate-400">File tersedia</dt><dd id="detail-exists" class="mt-0.5 font-medium">-</dd></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3"><dt class="text-[11px] uppercase text-slate-400">Lokasi</dt><dd class="mt-0.5 font-medium">Backup storage (server)</dd></div>
+    </dl>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <a id="detail-download" href="#" class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-600">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Download .sql
+      </a>
+      <a href="/backups" class="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 px-5 py-2.5 text-sm hover:border-accent hover:text-accent">Kembali ke Backup Manager</a>
+    </div>
+    <p class="mt-4 text-[11px] text-slate-400">Checksum membuktikan integritas file terhadap perubahan, bukan jaminan bahwa SQL pasti dapat di-restore. Uji import berkala di environment terisolasi.</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/backup_detail.js"></script>{% endblock %}
