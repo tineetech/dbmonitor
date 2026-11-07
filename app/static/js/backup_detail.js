@@ -20,6 +20,7 @@
       $('detail-sha').textContent = backup.sha256 || '-';
       $('detail-exists').textContent = backup.file_exists ? 'Ya' : 'Tidak';
       $('detail-exists').className = 'mt-0.5 font-medium ' + (backup.file_exists ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
+      $('detail-path').textContent = backup.server_path || backup.location || '-';
       var download = $('detail-download');
       if (backup.download_url) {
         download.setAttribute('href', backup.download_url);

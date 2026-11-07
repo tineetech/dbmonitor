@@ -8,7 +8,7 @@ from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from app.config import settings
+from app.config import PROJECT_ROOT, settings
 from app.database import SessionLocal, get_db
 from app.dependencies import (
     FULL_ACCESS_ROLES,
@@ -270,6 +270,11 @@ def backup_detail(backup_id: int, db: Session = Depends(get_db), user: dict = De
         .order_by(BackupJob.created_at.desc())
         .first()
     )
+    is_full_access = user["role"] in FULL_ACCESS_ROLES
+    try:
+        location = str(settings.backup_dir.relative_to(PROJECT_ROOT) / backup.filename)
+    except ValueError:
+        location = f"{settings.backup_dir.name}/{backup.filename}"
     return {
         "id": backup.id,
         "filename": backup.filename,
@@ -281,6 +286,8 @@ def backup_detail(backup_id: int, db: Session = Depends(get_db), user: dict = De
         "created_at": backup.created_at.isoformat() if backup.created_at else None,
         "requested_by": related_job.requested_by if related_job else None,
         "download_url": f"/api/v1/backups/{backup.id}/download" if exists else None,
+        "server_path": str(candidate) if (candidate and is_full_access) else None,
+        "location": location,
     }
 
 
